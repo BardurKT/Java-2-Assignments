@@ -1,210 +1,88 @@
 
 package bombastic;
 
+import java.util.function.BiConsumer;
+
 import bombastic.game.Game;
-import bombastic.menu.mainmenu.MainMenu;
-import bombastic.menu.settingsmenu.SettingsMenu;
-import bombastic.menu.chatmenu.ChatMenu;
+import bombastic.menu.mainmenu.MainMenuController;
+import bombastic.menu.settingsmenu.SettingsController;
+import bombastic.menu.chatmenu.ChatController;
 
 import javafx.application.Platform;
-import javafx.collections.ListChangeListener;
 import javafx.scene.Scene;
-import javafx.stage.Stage;
 
 public class Controller {
 
-    private Model model;
-    private View view;
+    private final Model model;
+    private final BiConsumer<Scene, String> sceneChanger;
 
-    private MainMenu mainMenu;
-    private SettingsMenu settingsMenu;
-    private ChatMenu chatMenu;
-    private Game game;
+    private final MainMenuController mainMenuController;
+    private final SettingsController settingsController;
+    private final ChatController chatController;
 
-    private Stage stage;
+    private final Game game;
+    private final Scene gameScene;
 
-    private Scene mainScene;
-    private Scene settingsScene;
-    private Scene chatScene;
-    private Scene gameScene;
+    public Controller(BiConsumer<Scene, String> sceneChanger) {
 
-    public Controller(Stage stage) {
-
-        this.stage = stage;
-
+        this.sceneChanger = sceneChanger;
         model = new Model();
-        view = new View();
 
-        // Get menus from View
-        mainMenu = view.getMainMenu();
-        settingsMenu = view.getSettingsMenu();
-        chatMenu = view.getChatMenu();
-        game = view.getGame();
+        // Create the game view.
+        game = new Game();
+        gameScene = new Scene(game, 600, 400);
 
-        // Get scenes from View
-        mainScene = view.getMainScene();
-        settingsScene = view.getSettingsScene();
-        chatScene = view.getChatScene();
-        gameScene = view.getGameScene();
-
-        // Bind menu backgrounds to the Model
-        mainMenu.selectedBackgroundProperty().bind(
-            model.backgroundProperty()
+        // Create the individual menu controllers.
+        mainMenuController = new MainMenuController(
+                model,
+                this::showGame,
+                this::showChatMenu,
+                this::showSettingsMenu,
+                Platform::exit
         );
 
-        settingsMenu.selectedBackgroundProperty().bind(
-            model.backgroundProperty()
+        settingsController = new SettingsController(
+                model,
+                this::showMainMenu
         );
 
-        chatMenu.selectedBackgroundProperty().bind(
-            model.backgroundProperty()
+        chatController = new ChatController(
+                model,
+                this::showMainMenu
         );
 
-        // Connect chat messages to the Model
-        chatMenu.getMessagesArea().setText(
-            String.join("\n", model.getChatMessages()) + "\n"
-        );
+        // Connect the game navigation.
+        game.setOnMainMenu(this::showMainMenu);
 
-        model.getChatMessages().addListener(
-            (ListChangeListener<String>) change -> {
-                chatMenu.getMessagesArea().setText(
-                    String.join("\n", model.getChatMessages()) + "\n"
-                );
-            }
-        );
-
-        // Connect online users to the Model
-        chatMenu.getUsersList().setItems(model.getOnlineUsers());
-
-        setupMainMenu();
-        setupSettingsMenu();
-        setupChatMenu();
-        setupGame();
-
+        // Display the main menu.
         showMainMenu();
     }
 
-    private void setupMainMenu() {
-
-        mainMenu.getStartButton().setOnAction(event -> {
-            showGame();
-        });
-
-        mainMenu.getChatButton().setOnAction(event -> {
-            showChatMenu();
-        });
-
-        mainMenu.getSettingsButton().setOnAction(event -> {
-            showSettingsMenu();
-        });
-
-        mainMenu.getExitButton().setOnAction(event -> {
-            Platform.exit();
-        });
-    }
-
-    private void setupSettingsMenu() {
-
-        settingsMenu.getMainMenuButton().setOnAction(event -> {
-            showMainMenu();
-        });
-
-        // Background selection
-        settingsMenu.getBackgroundMenu().getItems().get(0)
-                .setOnAction(event -> {
-                    model.setBackground("bg1.png");
-                    settingsMenu.getBackgroundMenu().setText(
-                        "Background: Background 1"
-                    );
-                });
-
-        settingsMenu.getBackgroundMenu().getItems().get(1)
-                .setOnAction(event -> {
-                    model.setBackground("bg2.png");
-                    settingsMenu.getBackgroundMenu().setText(
-                        "Background: Background 2"
-                    );
-                });
-
-        settingsMenu.getBackgroundMenu().getItems().get(2)
-                .setOnAction(event -> {
-                    model.setBackground("bg3.png");
-                    settingsMenu.getBackgroundMenu().setText(
-                        "Background: Background 3"
-                    );
-                });
-
-        // Arena selection
-        settingsMenu.getArenaMenu().getItems().get(0)
-                .setOnAction(event -> {
-                    model.setArena("Arena 1");
-                    settingsMenu.getArenaMenu().setText("Arena: Arena 1");
-                });
-
-        settingsMenu.getArenaMenu().getItems().get(1)
-                .setOnAction(event -> {
-                    model.setArena("Arena 2");
-                    settingsMenu.getArenaMenu().setText("Arena: Arena 2");
-                });
-
-        settingsMenu.getArenaMenu().getItems().get(2)
-                .setOnAction(event -> {
-                    model.setArena("Arena 3");
-                    settingsMenu.getArenaMenu().setText("Arena: Arena 3");
-                });
-    }
-
-    private void setupChatMenu() {
-
-        chatMenu.getMainMenuButton().setOnAction(event -> {
-            showMainMenu();
-        });
-
-        chatMenu.getSendButton().setOnAction(event -> {
-
-            String message = chatMenu.getMessageInput().getText().trim();
-
-            if (!message.isBlank()) {
-                model.addChatMessage("You: " + message);
-                chatMenu.getMessageInput().clear();
-            }
-        });
-    }
-
-    private void setupGame() {
-
-        game.getMainMenuButton().setOnAction(event -> {
-            showMainMenu();
-        });
-    }
-
-    // Switch scenes while preserving fullscreen state
-    private void changeScene(Scene scene, String title) {
-
-        boolean wasFullScreen = stage.isFullScreen();
-
-        stage.setScene(scene);
-        stage.setTitle(title);
-        stage.show();
-
-        if (wasFullScreen) {
-            stage.setFullScreen(true);
-        }
-    }
-
     private void showMainMenu() {
-        changeScene(mainScene, "Bombastic - Main Menu");
+        sceneChanger.accept(
+                mainMenuController.getScene(),
+                "Bombastic - Main Menu"
+        );
     }
 
     private void showSettingsMenu() {
-        changeScene(settingsScene, "Bombastic - Settings");
+        sceneChanger.accept(
+                settingsController.getScene(),
+                "Bombastic - Settings"
+        );
     }
 
     private void showChatMenu() {
-        changeScene(chatScene, "Bombastic - Chat");
+        sceneChanger.accept(
+                chatController.getScene(),
+                "Bombastic - Chat"
+        );
     }
 
     private void showGame() {
-        changeScene(gameScene, "Bombastic - Game");
+        sceneChanger.accept(
+                gameScene,
+                "Bombastic - Game"
+        );
     }
 }

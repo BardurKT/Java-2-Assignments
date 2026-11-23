@@ -15,12 +15,12 @@ import javafx.scene.image.Image;
 
 public class MainMenu extends VBox {
 
-    private Button startButton;
-    private Button chatButton;
-    private Button settingsButton;
-    private Button exitButton;
+    private final Button startButton;
+    private final Button chatButton;
+    private final Button settingsButton;
+    private final Button exitButton;
 
-    private StringProperty background =
+    private final StringProperty background =
             new SimpleStringProperty("bg1.png");
 
     public MainMenu() {
@@ -30,7 +30,7 @@ public class MainMenu extends VBox {
         settingsButton = new Button("Settings");
         exitButton = new Button("Exit");
 
-        // Make all buttons the same width
+        // Make all buttons the same width.
         double buttonWidth = 160;
 
         startButton.setPrefWidth(buttonWidth);
@@ -38,22 +38,38 @@ public class MainMenu extends VBox {
         settingsButton.setPrefWidth(buttonWidth);
         exitButton.setPrefWidth(buttonWidth);
 
-        // Center buttons and space them evenly
         setAlignment(Pos.CENTER);
         setSpacing(15);
 
         getChildren().addAll(
-            startButton,
-            chatButton,
-            settingsButton,
-            exitButton
+                startButton,
+                chatButton,
+                settingsButton,
+                exitButton
         );
 
-        background.addListener((observable, oldValue, newValue) -> {
-            setBackgroundImage(newValue);
-        });
+        background.addListener((observable, oldValue, newValue) ->
+                setBackgroundImage(newValue)
+        );
 
         setBackgroundImage(background.get());
+    }
+
+    // The controller supplies the actions for the buttons.
+    public void setOnStart(Runnable action) {
+        startButton.setOnAction(event -> action.run());
+    }
+
+    public void setOnChat(Runnable action) {
+        chatButton.setOnAction(event -> action.run());
+    }
+
+    public void setOnSettings(Runnable action) {
+        settingsButton.setOnAction(event -> action.run());
+    }
+
+    public void setOnExit(Runnable action) {
+        exitButton.setOnAction(event -> action.run());
     }
 
     public StringProperty selectedBackgroundProperty() {
@@ -63,35 +79,19 @@ public class MainMenu extends VBox {
     public void setBackgroundImage(String imageName) {
 
         Image image = new Image(
-            "file:resources/images/" + imageName
+                "file:resources/images/" + imageName
         );
 
         BackgroundImage backgroundImage = new BackgroundImage(
-            image,
-            BackgroundRepeat.NO_REPEAT,
-            BackgroundRepeat.NO_REPEAT,
-            BackgroundPosition.CENTER,
-            new BackgroundSize(
-                1, 1, true, true, false, true
-            )
+                image,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(
+                        1, 1, true, true, false, true
+                )
         );
 
         setBackground(new Background(backgroundImage));
-    }
-
-    public Button getStartButton() {
-        return startButton;
-    }
-
-    public Button getChatButton() {
-        return chatButton;
-    }
-
-    public Button getSettingsButton() {
-        return settingsButton;
-    }
-
-    public Button getExitButton() {
-        return exitButton;
     }
 }

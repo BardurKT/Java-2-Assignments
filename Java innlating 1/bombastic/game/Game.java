@@ -1,3 +1,4 @@
+
 package bombastic.game;
 
 import javafx.scene.control.Button;
@@ -6,9 +7,10 @@ import javafx.scene.layout.VBox;
 
 public class Game extends VBox {
 
-    private Button mainMenuButton;
+    private final Button mainMenuButton;
 
     public Game() {
+
         Label title = new Label("Bombastic - Game");
 
         mainMenuButton = new Button("Main Menu");
@@ -16,12 +18,13 @@ public class Game extends VBox {
         setSpacing(20);
 
         getChildren().addAll(
-            title,
-            mainMenuButton
+                title,
+                mainMenuButton
         );
     }
 
-    public Button getMainMenuButton() {
-        return mainMenuButton;
+    // The controller supplies the action for the button.
+    public void setOnMainMenu(Runnable action) {
+        mainMenuButton.setOnAction(event -> action.run());
     }
 }

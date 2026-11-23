@@ -1,6 +1,8 @@
 
 package bombastic.menu.settingsmenu;
 
+import java.util.function.Consumer;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Pos;
@@ -17,16 +19,16 @@ import javafx.scene.image.Image;
 
 public class SettingsMenu extends VBox {
 
-    private MenuButton backgroundMenu;
-    private MenuButton arenaMenu;
-    private Button mainMenuButton;
+    private final MenuButton backgroundMenu;
+    private final MenuButton arenaMenu;
+    private final Button mainMenuButton;
 
-    private StringProperty background =
+    private final StringProperty background =
             new SimpleStringProperty("bg1.png");
 
     public SettingsMenu() {
 
-        // Background selection
+        // Background selection.
         backgroundMenu = new MenuButton("Background: Background 1");
 
         MenuItem bg1 = new MenuItem("Background 1");
@@ -35,7 +37,7 @@ public class SettingsMenu extends VBox {
 
         backgroundMenu.getItems().addAll(bg1, bg2, bg3);
 
-        // Arena selection
+        // Arena selection.
         arenaMenu = new MenuButton("Arena: Arena 1");
 
         MenuItem arena1 = new MenuItem("Arena 1");
@@ -44,33 +46,71 @@ public class SettingsMenu extends VBox {
 
         arenaMenu.getItems().addAll(arena1, arena2, arena3);
 
-        // Main menu button
+        // Main menu button.
         mainMenuButton = new Button("Main Menu");
 
-        // Make all controls the same width
         double buttonWidth = 180;
 
         backgroundMenu.setPrefWidth(buttonWidth);
         arenaMenu.setPrefWidth(buttonWidth);
         mainMenuButton.setPrefWidth(buttonWidth);
 
-        // Center controls and space them evenly
         setAlignment(Pos.CENTER);
         setSpacing(15);
 
         getChildren().addAll(
-            backgroundMenu,
-            arenaMenu,
-            mainMenuButton
+                backgroundMenu,
+                arenaMenu,
+                mainMenuButton
         );
 
-        // Update background when the property changes
-        background.addListener((observable, oldValue, newValue) -> {
-            setBackgroundImage(newValue);
+        background.addListener((observable, oldValue, newValue) ->
+                setBackgroundImage(newValue)
+        );
+
+        setBackgroundImage(background.get());
+    }
+
+    // The controller supplies what happens when a background is selected.
+    public void setOnBackgroundSelected(Consumer<String> action) {
+
+        backgroundMenu.getItems().get(0).setOnAction(event -> {
+            backgroundMenu.setText("Background: Background 1");
+            action.accept("bg1.png");
         });
 
-        // Set initial background
-        setBackgroundImage(background.get());
+        backgroundMenu.getItems().get(1).setOnAction(event -> {
+            backgroundMenu.setText("Background: Background 2");
+            action.accept("bg2.png");
+        });
+
+        backgroundMenu.getItems().get(2).setOnAction(event -> {
+            backgroundMenu.setText("Background: Background 3");
+            action.accept("bg3.png");
+        });
+    }
+
+    // The controller supplies what happens when an arena is selected.
+    public void setOnArenaSelected(Consumer<String> action) {
+
+        arenaMenu.getItems().get(0).setOnAction(event -> {
+            arenaMenu.setText("Arena: Arena 1");
+            action.accept("Arena 1");
+        });
+
+        arenaMenu.getItems().get(1).setOnAction(event -> {
+            arenaMenu.setText("Arena: Arena 2");
+            action.accept("Arena 2");
+        });
+
+        arenaMenu.getItems().get(2).setOnAction(event -> {
+            arenaMenu.setText("Arena: Arena 3");
+            action.accept("Arena 3");
+        });
+    }
+
+    public void setOnMainMenu(Runnable action) {
+        mainMenuButton.setOnAction(event -> action.run());
     }
 
     public StringProperty selectedBackgroundProperty() {
@@ -80,31 +120,19 @@ public class SettingsMenu extends VBox {
     public void setBackgroundImage(String imageName) {
 
         Image image = new Image(
-            "file:resources/images/" + imageName
+                "file:resources/images/" + imageName
         );
 
         BackgroundImage backgroundImage = new BackgroundImage(
-            image,
-            BackgroundRepeat.NO_REPEAT,
-            BackgroundRepeat.NO_REPEAT,
-            BackgroundPosition.CENTER,
-            new BackgroundSize(
-                1, 1, true, true, false, true
-            )
+                image,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(
+                        1, 1, true, true, false, true
+                )
         );
 
         setBackground(new Background(backgroundImage));
-    }
-
-    public MenuButton getBackgroundMenu() {
-        return backgroundMenu;
-    }
-
-    public MenuButton getArenaMenu() {
-        return arenaMenu;
-    }
-
-    public Button getMainMenuButton() {
-        return mainMenuButton;
     }
 }

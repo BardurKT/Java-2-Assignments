@@ -1,8 +1,11 @@
 
 package bombastic.menu.chatmenu;
 
+import java.util.function.Consumer;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -22,30 +25,30 @@ import javafx.scene.image.Image;
 
 public class ChatMenu extends VBox {
 
-    private TextArea messagesArea;
-    private ListView<String> usersList;
-    private TextField messageInput;
-    private Button sendButton;
-    private Button mainMenuButton;
+    private final TextArea messagesArea;
+    private final ListView<String> usersList;
+    private final TextField messageInput;
+    private final Button sendButton;
+    private final Button mainMenuButton;
 
-    private StringProperty background =
+    private final StringProperty background =
             new SimpleStringProperty("bg1.png");
 
     public ChatMenu() {
 
-        // Chat messages
+        // Chat messages.
         messagesArea = new TextArea();
         messagesArea.setEditable(false);
         messagesArea.setWrapText(true);
         messagesArea.setPromptText("Chat messages appear here...");
         messagesArea.setPrefHeight(280);
 
-        // Online users
+        // Online users.
         usersList = new ListView<>();
         usersList.setPrefWidth(150);
         usersList.setPrefHeight(280);
 
-        // Section titles
+        // Section titles.
         Label messagesLabel = new Label("Messages");
         Label usersLabel = new Label("Online Players");
 
@@ -58,7 +61,7 @@ public class ChatMenu extends VBox {
         VBox.setVgrow(messagesArea, Priority.ALWAYS);
         VBox.setVgrow(usersList, Priority.ALWAYS);
 
-        // Message input
+        // Message input.
         messageInput = new TextField();
         messageInput.setPromptText("Write a message...");
 
@@ -72,7 +75,7 @@ public class ChatMenu extends VBox {
 
         HBox.setHgrow(messageInput, Priority.ALWAYS);
 
-        // Main menu button
+        // Main menu button.
         mainMenuButton = new Button("Main Menu");
         mainMenuButton.setPrefWidth(180);
 
@@ -81,19 +84,68 @@ public class ChatMenu extends VBox {
         setPadding(new Insets(20));
 
         getChildren().addAll(
-            chatContent,
-            inputArea,
-            mainMenuButton
+                chatContent,
+                inputArea,
+                mainMenuButton
         );
 
         VBox.setVgrow(chatContent, Priority.ALWAYS);
 
-        // Background synchronization
-        background.addListener((observable, oldValue, newValue) -> {
-            setBackgroundImage(newValue);
-        });
+        background.addListener((observable, oldValue, newValue) ->
+                setBackgroundImage(newValue)
+        );
 
         setBackgroundImage(background.get());
+    }
+
+    // Passes the typed message to the controller.
+    public void setOnSend(Consumer<String> action) {
+
+        sendButton.setOnAction(event -> {
+
+            String message = messageInput.getText().trim();
+
+            if (!message.isBlank()) {
+                action.accept(message);
+                messageInput.clear();
+            }
+        });
+    }
+
+    public void setOnMainMenu(Runnable action) {
+        mainMenuButton.setOnAction(event -> action.run());
+    }
+
+    // Displays messages supplied by the chat model.
+    public void setMessages(ObservableList<String> messages) {
+
+        messagesArea.setText("");
+
+        for (String message : messages) {
+            messagesArea.appendText(message + "\n");
+        }
+
+        messages.addListener((javafx.collections.ListChangeListener<String>) change -> {
+
+            while (change.next()) {
+
+                if (change.wasAdded()) {
+                    for (String message : change.getAddedSubList()) {
+                        messagesArea.appendText(message + "\n");
+                    }
+                }
+
+                if (change.wasRemoved()) {
+                    messagesArea.setText(
+                            String.join("\n", messages)
+                    );
+                }
+            }
+        });
+    }
+
+    public void setOnlineUsers(ObservableList<String> users) {
+        usersList.setItems(users);
     }
 
     public StringProperty selectedBackgroundProperty() {
@@ -103,39 +155,19 @@ public class ChatMenu extends VBox {
     public void setBackgroundImage(String imageName) {
 
         Image image = new Image(
-            "file:resources/images/" + imageName
+                "file:resources/images/" + imageName
         );
 
         BackgroundImage backgroundImage = new BackgroundImage(
-            image,
-            BackgroundRepeat.NO_REPEAT,
-            BackgroundRepeat.NO_REPEAT,
-            BackgroundPosition.CENTER,
-            new BackgroundSize(
-                1, 1, true, true, false, true
-            )
+                image,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(
+                        1, 1, true, true, false, true
+                )
         );
 
         setBackground(new Background(backgroundImage));
-    }
-
-    public TextArea getMessagesArea() {
-        return messagesArea;
-    }
-
-    public ListView<String> getUsersList() {
-        return usersList;
-    }
-
-    public TextField getMessageInput() {
-        return messageInput;
-    }
-
-    public Button getSendButton() {
-        return sendButton;
-    }
-
-    public Button getMainMenuButton() {
-        return mainMenuButton;
     }
 }
