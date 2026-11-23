@@ -1,8 +1,11 @@
 
 package bombastic.menu.chatmenu;
 
+import java.util.function.Consumer;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -22,13 +25,13 @@ import javafx.scene.image.Image;
 
 public class ChatMenu extends VBox {
 
-    private TextArea messagesArea;
-    private ListView<String> usersList;
-    private TextField messageInput;
-    private Button sendButton;
-    private Button mainMenuButton;
+    private final TextArea messagesArea;
+    private final ListView<String> usersList;
+    private final TextField messageInput;
+    private final Button sendButton;
+    private final Button mainMenuButton;
 
-    private StringProperty background =
+    private final StringProperty background =
             new SimpleStringProperty("bg1.png");
 
     public ChatMenu() {
@@ -81,17 +84,16 @@ public class ChatMenu extends VBox {
         setPadding(new Insets(20));
 
         getChildren().addAll(
-            chatContent,
-            inputArea,
-            mainMenuButton
+                chatContent,
+                inputArea,
+                mainMenuButton
         );
 
         VBox.setVgrow(chatContent, Priority.ALWAYS);
 
         // Background synchronization
-        background.addListener((observable, oldValue, newValue) -> {
-            setBackgroundImage(newValue);
-        });
+        background.addListener((observable, oldValue, newValue) ->
+                setBackgroundImage(newValue));
 
         setBackgroundImage(background.get());
     }
@@ -103,39 +105,51 @@ public class ChatMenu extends VBox {
     public void setBackgroundImage(String imageName) {
 
         Image image = new Image(
-            "file:resources/images/" + imageName
+                "file:resources/images/" + imageName
         );
 
         BackgroundImage backgroundImage = new BackgroundImage(
-            image,
-            BackgroundRepeat.NO_REPEAT,
-            BackgroundRepeat.NO_REPEAT,
-            BackgroundPosition.CENTER,
-            new BackgroundSize(
-                1, 1, true, true, false, true
-            )
+                image,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(
+                        1, 1, true, true, false, true
+                )
         );
 
         setBackground(new Background(backgroundImage));
     }
 
-    public TextArea getMessagesArea() {
-        return messagesArea;
+    // Pass the send action to the controller.
+    public void setOnSend(Consumer<String> action) {
+
+        sendButton.setOnAction(event -> {
+            String message = messageInput.getText().trim();
+
+            if (!message.isEmpty()) {
+                action.accept(message);
+                messageInput.clear();
+            }
+        });
     }
 
-    public ListView<String> getUsersList() {
-        return usersList;
+    // Pass the navigation action to the controller.
+    public void setOnMainMenu(Runnable action) {
+        mainMenuButton.setOnAction(event -> action.run());
     }
 
-    public TextField getMessageInput() {
-        return messageInput;
+    // Update messages without exposing the TextArea.
+    public void setMessages(ObservableList<String> messages) {
+        messagesArea.setText(String.join("\n", messages));
     }
 
-    public Button getSendButton() {
-        return sendButton;
+    // Update online users without exposing the ListView.
+    public void setOnlineUsers(ObservableList<String> users) {
+        usersList.setItems(users);
     }
 
-    public Button getMainMenuButton() {
-        return mainMenuButton;
+    public void addMessage(String message) {
+        messagesArea.appendText(message + "\n");
     }
 }

@@ -1,6 +1,8 @@
 
 package bombastic.game;
 
+import java.util.function.Supplier;
+
 import javafx.animation.AnimationTimer;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -17,25 +19,23 @@ public class Game extends VBox {
     private final GameView gameView;
     private GameController gameController;
 
-    private AnimationTimer gameLoop;
+    private final Supplier<String> arenaProvider;
+
+    private final AnimationTimer gameLoop;
     private long lastTime = 0;
 
-    public Game() {
+    public Game(Supplier<String> arenaProvider) {
 
-        // Create the game components.
-        gameModel = new GameModel();
+        this.arenaProvider = arenaProvider;
+
         gameView = new GameView();
-        gameController = new GameController(gameModel, gameView);
 
-        // Create the buttons.
         mainMenuButton = new Button("Main Menu");
         playAgainButton = new Button("Play Again");
 
-        // Hide the restart button until the round ends.
         playAgainButton.setVisible(false);
         playAgainButton.setManaged(false);
 
-        // Place both buttons in a horizontal layout.
         HBox buttonBar = new HBox(10);
         buttonBar.setAlignment(Pos.CENTER);
         buttonBar.getChildren().addAll(
@@ -43,21 +43,17 @@ public class Game extends VBox {
                 playAgainButton
         );
 
-        // Arrange the game screen.
         setAlignment(Pos.CENTER);
         setSpacing(10);
         setStyle("-fx-background-color: #222222;");
 
-        getChildren().addAll(
-                buttonBar,
-                gameView
-        );
+        getChildren().addAll(buttonBar, gameView);
+
+        // Create the initial game round.
+        createNewRound();
 
         // Restart the game when Play Again is clicked.
         playAgainButton.setOnAction(event -> restartGame());
-
-        // Draw the initial game state.
-        gameView.render(gameModel);
 
         // Create the game loop.
         gameLoop = new AnimationTimer() {
@@ -70,45 +66,47 @@ public class Game extends VBox {
                     return;
                 }
 
-                double dt = (currentTime - lastTime) / 1_000_000_000.0;
+                double dt = (currentTime - lastTime)
+                        / 1_000_000_000.0;
+
                 lastTime = currentTime;
 
                 gameModel.update(dt);
                 gameView.render(gameModel);
 
-                // Show the restart button when the round ends.
+                // Show the restart button when the game ends.
                 if (gameModel.isGameOver()) {
                     playAgainButton.setVisible(true);
                     playAgainButton.setManaged(true);
                 }
             }
         };
-
-        // Start and stop the loop when the game scene changes.
-        sceneProperty().addListener((observable, oldScene, newScene) -> {
-
-            if (newScene != null) {
-                initializeGameScene(newScene);
-                gameLoop.start();
-            } else {
-                gameLoop.stop();
-                lastTime = 0;
-            }
-        });
     }
 
-    // Create a fresh round.
-    private void restartGame() {
+    // Create a completely fresh round.
+    private void createNewRound() {
 
-        gameModel = new GameModel();
-        gameController = new GameController(gameModel, gameView);
+        gameModel = new GameModel(arenaProvider.get());
+
+        gameController = new GameController(
+                gameModel,
+                gameView
+        );
+
+        gameView.render(gameModel);
+    }
+
+    // Start a new game using the currently selected arena.
+    public void startNewGame() {
+
+        stopGame();
+
+        createNewRound();
 
         playAgainButton.setVisible(false);
         playAgainButton.setManaged(false);
 
         lastTime = 0;
-
-        gameView.render(gameModel);
 
         Scene scene = getScene();
 
@@ -117,14 +115,35 @@ public class Game extends VBox {
         }
 
         gameView.requestFocus();
+
+        gameLoop.start();
     }
 
-    // Connect keyboard controls to the current game scene.
+    // Stop the game loop.
+    public void stopGame() {
+
+        gameLoop.stop();
+        lastTime = 0;
+    }
+
+    // Play Again creates a completely fresh round.
+    private void restartGame() {
+        startNewGame();
+    }
+
+    // Connect keyboard controls to the game scene.
     private void initializeGameScene(Scene scene) {
         gameController.initializeKeyBindings(scene);
     }
 
-    public Button getMainMenuButton() {
-        return mainMenuButton;
+    // Handle navigation back to the main menu.
+    public void setOnMainMenu(Runnable action) {
+
+        mainMenuButton.setOnAction(event -> {
+
+            stopGame();
+
+            action.run();
+        });
     }
 }

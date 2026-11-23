@@ -3,6 +3,7 @@ package bombastic.game.arena;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import bombastic.game.entities.Entity;
 import bombastic.game.entities.Floor;
@@ -23,8 +24,8 @@ public class Arena {
     private final Image wallImage;
     private final Image crateImage;
 
-    // # represents an indestructible wall.
-    // . represents an open space where crates may appear.
+    private final Random random = new Random();
+
     private final char[][] layout = {
         "###############".toCharArray(),
         "#.............#".toCharArray(),
@@ -41,7 +42,25 @@ public class Arena {
         "###############".toCharArray()
     };
 
+    private final double crateChance;
+
     public Arena() {
+        this("Arena 1");
+    }
+
+    public Arena(String arenaName) {
+
+        // Choose the crate density for the selected arena.
+        switch (arenaName) {
+
+            case "Arena 2" -> crateChance = 0.30;
+
+            case "Arena 3" -> crateChance = 0.85;
+
+            case "Arena 1" -> crateChance = 0.65;
+
+            default -> crateChance = 0.65;
+        }
 
         // Load terrain images.
         grassImage = loadImage("assets/terrain/grass.png");
@@ -70,7 +89,7 @@ public class Arena {
 
                 // Every position has a grass floor.
                 entities.add(new Floor(
-                    x, y, TILE_SIZE, grassImage
+                        x, y, TILE_SIZE, grassImage
                 ));
 
                 char tile = layout[row][col];
@@ -79,14 +98,14 @@ public class Arena {
 
                     // Create an indestructible wall.
                     entities.add(new Wall(
-                        x, y, TILE_SIZE, wallImage, false
+                            x, y, TILE_SIZE, wallImage, false
                     ));
 
                 } else if (shouldCreateCrate(row, col)) {
 
                     // Create a destructible crate.
                     entities.add(new Wall(
-                        x, y, TILE_SIZE, crateImage, true
+                            x, y, TILE_SIZE, crateImage, true
                     ));
                 }
             }
@@ -106,8 +125,8 @@ public class Arena {
             return false;
         }
 
-        // Randomly distribute crates throughout the arena.
-        return Math.random() < 0.65;
+        // Randomly distribute crates according to the selected arena.
+        return random.nextDouble() < crateChance;
     }
 
     public List<Entity> getEntities() {

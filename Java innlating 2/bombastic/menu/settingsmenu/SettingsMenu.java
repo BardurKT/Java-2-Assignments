@@ -1,6 +1,8 @@
 
 package bombastic.menu.settingsmenu;
 
+import java.util.function.Consumer;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Pos;
@@ -17,11 +19,11 @@ import javafx.scene.image.Image;
 
 public class SettingsMenu extends VBox {
 
-    private MenuButton backgroundMenu;
-    private MenuButton arenaMenu;
-    private Button mainMenuButton;
+    private final MenuButton backgroundMenu;
+    private final MenuButton arenaMenu;
+    private final Button mainMenuButton;
 
-    private StringProperty background =
+    private final StringProperty background =
             new SimpleStringProperty("bg1.png");
 
     public SettingsMenu() {
@@ -47,29 +49,25 @@ public class SettingsMenu extends VBox {
         // Main menu button
         mainMenuButton = new Button("Main Menu");
 
-        // Make all controls the same width
         double buttonWidth = 180;
 
         backgroundMenu.setPrefWidth(buttonWidth);
         arenaMenu.setPrefWidth(buttonWidth);
         mainMenuButton.setPrefWidth(buttonWidth);
 
-        // Center controls and space them evenly
         setAlignment(Pos.CENTER);
         setSpacing(15);
 
         getChildren().addAll(
-            backgroundMenu,
-            arenaMenu,
-            mainMenuButton
+                backgroundMenu,
+                arenaMenu,
+                mainMenuButton
         );
 
-        // Update background when the property changes
-        background.addListener((observable, oldValue, newValue) -> {
-            setBackgroundImage(newValue);
-        });
+        // Update the visual background whenever the model changes.
+        background.addListener((observable, oldValue, newValue) ->
+                setBackgroundImage(newValue));
 
-        // Set initial background
         setBackgroundImage(background.get());
     }
 
@@ -80,31 +78,69 @@ public class SettingsMenu extends VBox {
     public void setBackgroundImage(String imageName) {
 
         Image image = new Image(
-            "file:resources/images/" + imageName
+                "file:resources/images/" + imageName
         );
 
         BackgroundImage backgroundImage = new BackgroundImage(
-            image,
-            BackgroundRepeat.NO_REPEAT,
-            BackgroundRepeat.NO_REPEAT,
-            BackgroundPosition.CENTER,
-            new BackgroundSize(
-                1, 1, true, true, false, true
-            )
+                image,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(
+                        1, 1, true, true, false, true
+                )
         );
 
         setBackground(new Background(backgroundImage));
     }
 
-    public MenuButton getBackgroundMenu() {
-        return backgroundMenu;
+    // Pass background selection to the controller.
+    public void setOnBackgroundSelected(Consumer<String> action) {
+
+        MenuItem bg1 = backgroundMenu.getItems().get(0);
+        MenuItem bg2 = backgroundMenu.getItems().get(1);
+        MenuItem bg3 = backgroundMenu.getItems().get(2);
+
+        bg1.setOnAction(event -> {
+            backgroundMenu.setText("Background: Background 1");
+            action.accept("bg1.png");
+        });
+
+        bg2.setOnAction(event -> {
+            backgroundMenu.setText("Background: Background 2");
+            action.accept("bg2.png");
+        });
+
+        bg3.setOnAction(event -> {
+            backgroundMenu.setText("Background: Background 3");
+            action.accept("bg3.png");
+        });
     }
 
-    public MenuButton getArenaMenu() {
-        return arenaMenu;
+    // Pass arena selection to the controller.
+    public void setOnArenaSelected(Consumer<String> action) {
+
+        MenuItem arena1 = arenaMenu.getItems().get(0);
+        MenuItem arena2 = arenaMenu.getItems().get(1);
+        MenuItem arena3 = arenaMenu.getItems().get(2);
+
+        arena1.setOnAction(event -> {
+            arenaMenu.setText("Arena: Arena 1");
+            action.accept("Arena 1");
+        });
+
+        arena2.setOnAction(event -> {
+            arenaMenu.setText("Arena: Arena 2");
+            action.accept("Arena 2");
+        });
+
+        arena3.setOnAction(event -> {
+            arenaMenu.setText("Arena: Arena 3");
+            action.accept("Arena 3");
+        });
     }
 
-    public Button getMainMenuButton() {
-        return mainMenuButton;
+    public void setOnMainMenu(Runnable action) {
+        mainMenuButton.setOnAction(event -> action.run());
     }
 }

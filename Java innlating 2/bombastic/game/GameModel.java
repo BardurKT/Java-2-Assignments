@@ -48,9 +48,15 @@ public class GameModel {
     private boolean gameOver = false;
     private String winner = "";
 
+    // Default constructor uses Arena 1.
     public GameModel() {
+        this("Arena 1");
+    }
 
-        arena = new Arena();
+    // Constructor allows the selected arena to be used.
+    public GameModel(String arenaName) {
+
+        arena = new Arena(arenaName);
 
         Image player1Image = new Image(
                 getClass().getResourceAsStream("/assets/players/blue_down_0.png"));
@@ -155,14 +161,9 @@ public class GameModel {
         List<Entity> obstacles = new ArrayList<>(arena.getEntities());
         obstacles.addAll(bombs);
 
-        // Update both players concurrently.
-        CompletableFuture<Void> player1Update =
-                CompletableFuture.runAsync(() -> player1.update(dt, obstacles));
-
-        CompletableFuture<Void> player2Update =
-                CompletableFuture.runAsync(() -> player2.update(dt, obstacles));
-
-        CompletableFuture.allOf(player1Update, player2Update).join();
+        // Update both players sequentially on the game thread.
+        player1.update(dt, obstacles);
+        player2.update(dt, obstacles);
 
         checkPowerUpCollisions();
 
@@ -359,6 +360,7 @@ public class GameModel {
                 CompletableFuture.supplyAsync(
                         () -> findExplosionHittingPlayer(player2));
 
+        // Wait for both collision checks to finish.
         Explosion explosionForPlayer1 = player1Hit.join();
         Explosion explosionForPlayer2 = player2Hit.join();
 
